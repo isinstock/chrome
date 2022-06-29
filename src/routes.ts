@@ -15,7 +15,12 @@ import {
   before as screenCastBefore,
 } from './apis/screencast';
 import * as chromeHelper from './chrome-helper';
-import { MAX_PAYLOAD_SIZE } from './config';
+import {
+  MAX_PAYLOAD_SIZE,
+  PROXY_URL,
+  HOST,
+  PORT,
+} from './config';
 import { Features } from './features';
 import { PuppeteerProvider } from './puppeteer-provider';
 import {
@@ -63,6 +68,10 @@ const htmlParser = express.text({
   limit: MAX_PAYLOAD_SIZE,
   type: ['text/plain', 'text/html'],
 });
+
+const externalURL = PROXY_URL
+  ? new URL(PROXY_URL)
+  : new URL(`http://${HOST || `127.0.0.1`}:${PORT}`);
 
 interface IGetRoutes {
   puppeteerProvider: PuppeteerProvider;
@@ -513,7 +522,7 @@ export const getRoutes = ({
       asyncWebHandler(async (req: Request, res: Response) => {
         const targetId = generateChromeTarget();
         const baseUrl = req.get('host');
-        const protocol = req.protocol.includes('s') ? 'wss' : 'ws';
+        const protocol = externalURL.protocol.includes('s') ? 'wss' : 'ws';
 
         res.json({
           description: '',
@@ -529,7 +538,7 @@ export const getRoutes = ({
 
     router.get('/json/version', async (req, res) => {
       const baseUrl = req.get('host');
-      const protocol = req.protocol.includes('s') ? 'wss' : 'ws';
+      const protocol = externalURL.protocol.includes('s') ? 'wss' : 'ws';
       const version = await chromeHelper
         .getVersionJSON()
         .catch((err) => res.status(400).send(err.message));
@@ -545,7 +554,7 @@ export const getRoutes = ({
       asyncWebHandler(async (req: Request, res: Response) => {
         const targetId = generateChromeTarget();
         const baseUrl = req.get('host');
-        const protocol = req.protocol.includes('s') ? 'wss' : 'ws';
+        const protocol = externalURL.protocol.includes('s') ? 'wss' : 'ws';
 
         res.json([
           {
